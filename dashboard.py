@@ -359,8 +359,8 @@ with col1:
     st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Total Equity (USD)</div>
-            <div class="metric-value" style="color: {PRIMARY_COLOR};">${total_equity:.2f}</div>
-            <div style="font-size:0.85rem; color:{TEXT_MUTED}">USDT Cash: ${usdt_bal:.2f}</div>
+            <div class="metric-value" style="color: {PRIMARY_COLOR};">${total_equity:.4f}</div>
+            <div style="font-size:0.85rem; color:{TEXT_MUTED}">USDT Cash: ${usdt_bal:.4f}</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -369,8 +369,8 @@ with col2:
     st.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">Net Profit / Loss</div>
-            <div class="metric-value" style="color: {pnl_color};">{net_profit:+.2f} USD</div>
-            <div style="font-size:0.85rem; color:{pnl_color}">{profit_pct:+.2f}% ROI</div>
+            <div class="metric-value" style="color: {pnl_color};">{net_profit:+.4f} USD</div>
+            <div style="font-size:0.85rem; color:{pnl_color}">{profit_pct:+.4f}% ROI</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -616,7 +616,7 @@ with tab_trades:
             st.markdown(f"""
                 <div class="trade-row {'buy' if t['side'] == 'BUY' else 'sell'}">
                     <div>
-                        {side_tag} <strong>{t['symbol']}</strong> • {t['amount']:.5f} units @ ${t['price']:.2f}
+                        {side_tag} <strong>{t['symbol']}</strong> • {t['amount']:.5f} units @ ${t['price']:.4f}
                     </div>
                     <div style="font-size:0.9rem; text-align:right;">
                         <span style="color:{TEXT_MUTED}">{time_formatted}</span>
