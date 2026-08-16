@@ -43,7 +43,7 @@ def get_exchange(api_key=None, api_secret=None):
     exchange = ccxt.cryptocom(params)
     return exchange
 
-def fetch_ohlcv_safely(exchange, symbol, timeframe='5m', limit=50):
+def fetch_ohlcv_safely(exchange, symbol, timeframe='5m', limit=200):
     try:
         # Load markets if not loaded
         if not exchange.markets:
@@ -335,10 +335,14 @@ def run_bot_cycle(exchange, strategy):
     for symbol in symbols:
         currency = symbol.split('/')[0]
         
-        # Fetch historical prices
-        df = fetch_ohlcv_safely(exchange, symbol, timeframe, limit=50)
-        if df is None or len(df) < 25:
-            log(f"Skipping {symbol} due to insufficient candle data.")
+        # Fetch historical prices. limit must comfortably exceed
+        # strategy.min_required_bars() (trend_ema_period=50 + buffer = 55)
+        # or the strategy silently falls back to degenerate placeholder
+        # indicators that can never produce a BUY signal (see strategy.py).
+        df = fetch_ohlcv_safely(exchange, symbol, timeframe, limit=200)
+        if df is None or len(df) < strategy.min_required_bars():
+            log(f"Skipping {symbol} due to insufficient candle data "
+                f"({0 if df is None else len(df)}/{strategy.min_required_bars()} bars).")
             continue
             
         current_price = df.iloc[-1]['close']

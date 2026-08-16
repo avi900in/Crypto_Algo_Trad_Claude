@@ -417,7 +417,7 @@ with mcol1:
     api_secret = os.getenv("CRYPTOCOM_API_SECRET")
     exchange = get_exchange(api_key, api_secret)
     
-    df = fetch_ohlcv_safely(exchange, selected_symbol, timeframe=candle_interval, limit=50)
+    df = fetch_ohlcv_safely(exchange, selected_symbol, timeframe=candle_interval, limit=200)
     
     if df is not None and len(df) > 0:
         # Calculate strategy indicators

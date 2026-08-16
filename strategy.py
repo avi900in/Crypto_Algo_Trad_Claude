@@ -25,14 +25,34 @@ class BreakoutStrategy:
         self.min_take_profit_pct = min_take_profit_pct
         self.max_take_profit_pct = max_take_profit_pct
 
+    def min_required_bars(self):
+        """
+        Minimum number of candles needed before indicators are meaningful.
+        Callers (e.g. bot.py) should fetch comfortably more than this so the
+        EMA/RSI/ATR values have actually converged, not just barely qualify.
+        """
+        return max(self.rsi_period, self.trend_ema_period, self.volume_period, self.atr_period) + 5
+
     def calculate_indicators(self, df):
         """
         Expects a pandas DataFrame with columns: ['open', 'high', 'low', 'close', 'volume']
         """
-        min_len = max(self.rsi_period, self.trend_ema_period, self.volume_period, self.atr_period) + 5
+        min_len = self.min_required_bars()
 
         if len(df) < min_len:
-            # Not enough data yet
+            # BUG (fixed): this placeholder path used to be reachable from
+            # analyze() because analyze()'s own guard only checked against
+            # trend_ema_period (50), not the true min_len used here (55+).
+            # That let a 50-bar DataFrame slip through analyze()'s guard and
+            # land here, where ema_trend was set equal to close and
+            # volume_sma equal to volume — which forces volume_ratio == 1.0
+            # and current_price > ema_trend_val == False on every single bar.
+            # Two of the required entry conditions then became permanently
+            # unsatisfiable, so BUY could never fire no matter the market.
+            # analyze() now checks len(df) against min_required_bars() up
+            # front and returns a clear HOLD instead of reaching this branch
+            # in normal operation. This fallback remains only as a defensive
+            # no-op for callers that invoke calculate_indicators() directly.
             df['rsi'] = 50.0
             df['ema_20'] = df['close']
             df['ema_trend'] = df['close']
@@ -88,8 +108,12 @@ class BreakoutStrategy:
         Analyzes the latest bar and decides on BUY, SELL, or HOLD.
         Incorporates round-trip fees into the exit targets.
         """
-        if len(df) < max(5, self.trend_ema_period):
-            return {"signal": "HOLD", "reason": "Insufficient candles"}
+        required_bars = self.min_required_bars()
+        if len(df) < required_bars:
+            return {
+                "signal": "HOLD",
+                "reason": f"Insufficient candles: have {len(df)}, need {required_bars} for indicators to be valid",
+            }
 
         df = self.calculate_indicators(df)
 
